@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html>
+  <head>
+      <meta charset="utf-8" />
+      <title>深入探索C++对象模型1</title>
+      <style>.markdown-preview:not([data-use-github-style]) { padding: 2em; font-size: 1.2em; color: rgb(171, 178, 191); background-color: rgb(40, 44, 52); overflow: auto; }
+.markdown-preview:not([data-use-github-style]) > :first-child { margin-top: 0px; }
+.markdown-preview:not([data-use-github-style]) h1, .markdown-preview:not([data-use-github-style]) h2, .markdown-preview:not([data-use-github-style]) h3, .markdown-preview:not([data-use-github-style]) h4, .markdown-preview:not([data-use-github-style]) h5, .markdown-preview:not([data-use-github-style]) h6 { line-height: 1.2; margin-top: 1.5em; margin-bottom: 0.5em; color: rgb(255, 255, 255); }
+.markdown-preview:not([data-use-github-style]) h1 { font-size: 2.4em; font-weight: 300; }
+.markdown-preview:not([data-use-github-style]) h2 { font-size: 1.8em; font-weight: 400; }
+.markdown-preview:not([data-use-github-style]) h3 { font-size: 1.5em; font-weight: 500; }
+.markdown-preview:not([data-use-github-style]) h4 { font-size: 1.2em; font-weight: 600; }
+.markdown-preview:not([data-use-github-style]) h5 { font-size: 1.1em; font-weight: 600; }
+.markdown-preview:not([data-use-github-style]) h6 { font-size: 1em; font-weight: 600; }
+.markdown-preview:not([data-use-github-style]) strong { color: rgb(255, 255, 255); }
+.markdown-preview:not([data-use-github-style]) del { color: rgb(124, 135, 156); }
+.markdown-preview:not([data-use-github-style]) a, .markdown-preview:not([data-use-github-style]) a code { color: rgb(82, 139, 255); }
+.markdown-preview:not([data-use-github-style]) img { max-width: 100%; }
+.markdown-preview:not([data-use-github-style]) > p { margin-top: 0px; margin-bottom: 1.5em; }
+.markdown-preview:not([data-use-github-style]) > ul, .markdown-preview:not([data-use-github-style]) > ol { margin-bottom: 1.5em; }
+.markdown-preview:not([data-use-github-style]) blockquote { margin: 1.5em 0px; font-size: inherit; color: rgb(124, 135, 156); border-color: rgb(75, 83, 98); border-width: 4px; }
+.markdown-preview:not([data-use-github-style]) hr { margin: 3em 0px; border-top: 2px dashed rgb(75, 83, 98); background: none; }
+.markdown-preview:not([data-use-github-style]) table { margin: 1.5em 0px; }
+.markdown-preview:not([data-use-github-style]) th { color: rgb(255, 255, 255); }
+.markdown-preview:not([data-use-github-style]) th, .markdown-preview:not([data-use-github-style]) td { padding: 0.66em 1em; border: 1px solid rgb(75, 83, 98); }
+.markdown-preview:not([data-use-github-style]) code { color: rgb(255, 255, 255); background-color: rgb(58, 63, 75); }
+.markdown-preview:not([data-use-github-style]) pre.editor-colors { margin: 1.5em 0px; padding: 1em; font-size: 0.92em; border-radius: 3px; background-color: rgb(49, 54, 63); }
+.markdown-preview:not([data-use-github-style]) kbd { color: rgb(255, 255, 255); border-width: 1px 1px 2px; border-style: solid; border-color: rgb(75, 83, 98) rgb(75, 83, 98) rgb(62, 68, 81); border-image: initial; background-color: rgb(58, 63, 75); }
+.markdown-preview[data-use-github-style] { font-family: "Helvetica Neue", Helvetica, "Segoe UI", Arial, freesans, sans-serif; line-height: 1.6; word-wrap: break-word; padding: 30px; font-size: 16px; color: rgb(51, 51, 51); background-color: rgb(255, 255, 255); overflow: scroll; }
+.markdown-preview[data-use-github-style] > :first-child { margin-top: 0px !important; }
+.markdown-preview[data-use-github-style] > :last-child { margin-bottom: 0px !important; }
+.markdown-preview[data-use-github-style] a:not([href]) { color: inherit; text-decoration: none; }
+.markdown-preview[data-use-github-style] .absent { color: rgb(204, 0, 0); }
+.markdown-preview[data-use-github-style] .anchor { position: absolute; top: 0px; left: 0px; display: block; padding-right: 6px; padding-left: 30px; margin-left: -30px; }
+.markdown-preview[data-use-github-style] .anchor:focus { outline: none; }
+.markdown-preview[data-use-github-style] h1, .markdown-preview[data-use-github-style] h2, .markdown-preview[data-use-github-style] h3, .markdown-preview[data-use-github-style] h4, .markdown-preview[data-use-github-style] h5, .markdown-preview[data-use-github-style] h6 { position: relative; margin-top: 1em; margin-bottom: 16px; font-weight: bold; line-height: 1.4; }
+.markdown-preview[data-use-github-style] h1 .octicon-link, .markdown-preview[data-use-github-style] h2 .octicon-link, .markdown-preview[data-use-github-style] h3 .octicon-link, .markdown-preview[data-use-github-style] h4 .octicon-link, .markdown-preview[data-use-github-style] h5 .octicon-link, .markdown-preview[data-use-github-style] h6 .octicon-link { display: none; color: rgb(0, 0, 0); vertical-align: middle; }
+.markdown-preview[data-use-github-style] h1:hover .anchor, .markdown-preview[data-use-github-style] h2:hover .anchor, .markdown-preview[data-use-github-style] h3:hover .anchor, .markdown-preview[data-use-github-style] h4:hover .anchor, .markdown-preview[data-use-github-style] h5:hover .anchor, .markdown-preview[data-use-github-style] h6:hover .anchor { padding-left: 8px; margin-left: -30px; text-decoration: none; }
+.markdown-preview[data-use-github-style] h1:hover .anchor .octicon-link, .markdown-preview[data-use-github-style] h2:hover .anchor .octicon-link, .markdown-preview[data-use-github-style] h3:hover .anchor .octicon-link, .markdown-preview[data-use-github-style] h4:hover .anchor .octicon-link, .markdown-preview[data-use-github-style] h5:hover .anchor .octicon-link, .markdown-preview[data-use-github-style] h6:hover .anchor .octicon-link { display: inline-block; }
+.markdown-preview[data-use-github-style] h1 tt, .markdown-preview[data-use-github-style] h2 tt, .markdown-preview[data-use-github-style] h3 tt, .markdown-preview[data-use-github-style] h4 tt, .markdown-preview[data-use-github-style] h5 tt, .markdown-preview[data-use-github-style] h6 tt, .markdown-preview[data-use-github-style] h1 code, .markdown-preview[data-use-github-style] h2 code, .markdown-preview[data-use-github-style] h3 code, .markdown-preview[data-use-github-style] h4 code, .markdown-preview[data-use-github-style] h5 code, .markdown-preview[data-use-github-style] h6 code { font-size: inherit; }
+.markdown-preview[data-use-github-style] h1 { padding-bottom: 0.3em; font-size: 2.25em; line-height: 1.2; border-bottom: 1px solid rgb(238, 238, 238); }
+.markdown-preview[data-use-github-style] h1 .anchor { line-height: 1; }
+.markdown-preview[data-use-github-style] h2 { padding-bottom: 0.3em; font-size: 1.75em; line-height: 1.225; border-bottom: 1px solid rgb(238, 238, 238); }
+.markdown-preview[data-use-github-style] h2 .anchor { line-height: 1; }
+.markdown-preview[data-use-github-style] h3 { font-size: 1.5em; line-height: 1.43; }
+.markdown-preview[data-use-github-style] h3 .anchor { line-height: 1.2; }
+.markdown-preview[data-use-github-style] h4 { font-size: 1.25em; }
+.markdown-preview[data-use-github-style] h4 .anchor { line-height: 1.2; }
+.markdown-preview[data-use-github-style] h5 { font-size: 1em; }
+.markdown-preview[data-use-github-style] h5 .anchor { line-height: 1.1; }
+.markdown-preview[data-use-github-style] h6 { font-size: 1em; color: rgb(119, 119, 119); }
+.markdown-preview[data-use-github-style] h6 .anchor { line-height: 1.1; }
+.markdown-preview[data-use-github-style] p, .markdown-preview[data-use-github-style] blockquote, .markdown-preview[data-use-github-style] ul, .markdown-preview[data-use-github-style] ol, .markdown-preview[data-use-github-style] dl, .markdown-preview[data-use-github-style] table, .markdown-preview[data-use-github-style] pre { margin-top: 0px; margin-bottom: 16px; }
+.markdown-preview[data-use-github-style] hr { height: 4px; padding: 0px; margin: 16px 0px; background-color: rgb(231, 231, 231); border: 0px none; }
+.markdown-preview[data-use-github-style] ul, .markdown-preview[data-use-github-style] ol { padding-left: 2em; }
+.markdown-preview[data-use-github-style] ul.no-list, .markdown-preview[data-use-github-style] ol.no-list { padding: 0px; list-style-type: none; }
+.markdown-preview[data-use-github-style] ul ul, .markdown-preview[data-use-github-style] ul ol, .markdown-preview[data-use-github-style] ol ol, .markdown-preview[data-use-github-style] ol ul { margin-top: 0px; margin-bottom: 0px; }
+.markdown-preview[data-use-github-style] li > p { margin-top: 16px; }
+.markdown-preview[data-use-github-style] dl { padding: 0px; }
+.markdown-preview[data-use-github-style] dl dt { padding: 0px; margin-top: 16px; font-size: 1em; font-style: italic; font-weight: bold; }
+.markdown-preview[data-use-github-style] dl dd { padding: 0px 16px; margin-bottom: 16px; }
+.markdown-preview[data-use-github-style] blockquote { padding: 0px 15px; color: rgb(119, 119, 119); border-left: 4px solid rgb(221, 221, 221); }
+.markdown-preview[data-use-github-style] blockquote > :first-child { margin-top: 0px; }
+.markdown-preview[data-use-github-style] blockquote > :last-child { margin-bottom: 0px; }
+.markdown-preview[data-use-github-style] table { display: block; width: 100%; overflow: auto; word-break: keep-all; }
+.markdown-preview[data-use-github-style] table th { font-weight: bold; }
+.markdown-preview[data-use-github-style] table th, .markdown-preview[data-use-github-style] table td { padding: 6px 13px; border: 1px solid rgb(221, 221, 221); }
+.markdown-preview[data-use-github-style] table tr { background-color: rgb(255, 255, 255); border-top: 1px solid rgb(204, 204, 204); }
+.markdown-preview[data-use-github-style] table tr:nth-child(2n) { background-color: rgb(248, 248, 248); }
+.markdown-preview[data-use-github-style] img { max-width: 100%; box-sizing: border-box; }
+.markdown-preview[data-use-github-style] .emoji { max-width: none; }
+.markdown-preview[data-use-github-style] span.frame { display: block; overflow: hidden; }
+.markdown-preview[data-use-github-style] span.frame > span { display: block; float: left; width: auto; padding: 7px; margin: 13px 0px 0px; overflow: hidden; border: 1px solid rgb(221, 221, 221); }
+.markdown-preview[data-use-github-style] span.frame span img { display: block; float: left; }
+.markdown-preview[data-use-github-style] span.frame span span { display: block; padding: 5px 0px 0px; clear: both; color: rgb(51, 51, 51); }
+.markdown-preview[data-use-github-style] span.align-center { display: block; overflow: hidden; clear: both; }
+.markdown-preview[data-use-github-style] span.align-center > span { display: block; margin: 13px auto 0px; overflow: hidden; text-align: center; }
+.markdown-preview[data-use-github-style] span.align-center span img { margin: 0px auto; text-align: center; }
+.markdown-preview[data-use-github-style] span.align-right { display: block; overflow: hidden; clear: both; }
+.markdown-preview[data-use-github-style] span.align-right > span { display: block; margin: 13px 0px 0px; overflow: hidden; text-align: right; }
+.markdown-preview[data-use-github-style] span.align-right span img { margin: 0px; text-align: right; }
+.markdown-preview[data-use-github-style] span.float-left { display: block; float: left; margin-right: 13px; overflow: hidden; }
+.markdown-preview[data-use-github-style] span.float-left span { margin: 13px 0px 0px; }
+.markdown-preview[data-use-github-style] span.float-right { display: block; float: right; margin-left: 13px; overflow: hidden; }
+.markdown-preview[data-use-github-style] span.float-right > span { display: block; margin: 13px auto 0px; overflow: hidden; text-align: right; }
+.markdown-preview[data-use-github-style] code, .markdown-preview[data-use-github-style] tt { padding: 0.2em 0px; margin: 0px; font-size: 85%; background-color: rgba(0, 0, 0, 0.0392157); border-radius: 3px; }
+.markdown-preview[data-use-github-style] code::before, .markdown-preview[data-use-github-style] tt::before, .markdown-preview[data-use-github-style] code::after, .markdown-preview[data-use-github-style] tt::after { letter-spacing: -0.2em; content: " "; }
+.markdown-preview[data-use-github-style] code br, .markdown-preview[data-use-github-style] tt br { display: none; }
+.markdown-preview[data-use-github-style] del code { text-decoration: inherit; }
+.markdown-preview[data-use-github-style] pre > code { padding: 0px; margin: 0px; font-size: 100%; word-break: normal; white-space: pre; background: transparent; border: 0px; }
+.markdown-preview[data-use-github-style] .highlight { margin-bottom: 16px; }
+.markdown-preview[data-use-github-style] .highlight pre, .markdown-preview[data-use-github-style] pre { padding: 16px; overflow: auto; font-size: 85%; line-height: 1.45; background-color: rgb(247, 247, 247); border-radius: 3px; }
+.markdown-preview[data-use-github-style] .highlight pre { margin-bottom: 0px; word-break: normal; }
+.markdown-preview[data-use-github-style] pre { word-wrap: normal; }
+.markdown-preview[data-use-github-style] pre code, .markdown-preview[data-use-github-style] pre tt { display: inline; max-width: initial; padding: 0px; margin: 0px; overflow: initial; line-height: inherit; word-wrap: normal; background-color: transparent; border: 0px; }
+.markdown-preview[data-use-github-style] pre code::before, .markdown-preview[data-use-github-style] pre tt::before, .markdown-preview[data-use-github-style] pre code::after, .markdown-preview[data-use-github-style] pre tt::after { content: normal; }
+.markdown-preview[data-use-github-style] kbd { display: inline-block; padding: 3px 5px; font-size: 11px; line-height: 10px; color: rgb(85, 85, 85); vertical-align: middle; background-color: rgb(252, 252, 252); border-width: 1px; border-style: solid; border-color: rgb(204, 204, 204) rgb(204, 204, 204) rgb(187, 187, 187); border-image: initial; border-radius: 3px; box-shadow: rgb(187, 187, 187) 0px -1px 0px inset; }
+.markdown-preview[data-use-github-style] a { color: rgb(51, 122, 183); }
+.markdown-preview[data-use-github-style] code { color: inherit; }
+.markdown-preview[data-use-github-style] pre.editor-colors { padding: 0.8em 1em; margin-bottom: 1em; font-size: 0.85em; border-radius: 4px; overflow: auto; }
+.scrollbars-visible-always .markdown-preview pre.editor-colors .vertical-scrollbar, .scrollbars-visible-always .markdown-preview pre.editor-colors .horizontal-scrollbar { visibility: hidden; }
+.scrollbars-visible-always .markdown-preview pre.editor-colors:hover .vertical-scrollbar, .scrollbars-visible-always .markdown-preview pre.editor-colors:hover .horizontal-scrollbar { visibility: visible; }
+.markdown-preview .task-list-item-checkbox { position: absolute; margin: 0.25em 0px 0px -1.4em; }
+.bracket-matcher .region {
+  border-bottom: 1px dotted lime;
+  position: absolute;
+}
+
+.spell-check-misspelling .region {
+  border-bottom: 2px dotted rgba(255, 51, 51, 0.75);
+}
+.spell-check-corrections {
+  width: 25em !important;
+}
+
+pre.editor-colors {
+  background-color: #282c34;
+  color: #abb2bf;
+}
+pre.editor-colors .line.cursor-line {
+  background-color: rgba(153, 187, 255, 0.04);
+}
+pre.editor-colors .invisible {
+  color: #abb2bf;
+}
+pre.editor-colors .cursor {
+  border-left: 2px solid #528bff;
+}
+pre.editor-colors .selection .region {
+  background-color: #3e4451;
+}
+pre.editor-colors .bracket-matcher .region {
+  border-bottom: 1px solid #528bff;
+  box-sizing: border-box;
+}
+pre.editor-colors .invisible-character {
+  color: rgba(171, 178, 191, 0.15);
+}
+pre.editor-colors .indent-guide {
+  color: rgba(171, 178, 191, 0.15);
+}
+pre.editor-colors .wrap-guide {
+  background-color: rgba(171, 178, 191, 0.15);
+}
+pre.editor-colors .find-result .region.region.region,
+pre.editor-colors .current-result .region.region.region {
+  border-radius: 2px;
+  background-color: rgba(82, 139, 255, 0.24);
+  transition: border-color 0.4s;
+}
+pre.editor-colors .find-result .region.region.region {
+  border: 2px solid transparent;
+}
+pre.editor-colors .current-result .region.region.region {
+  border: 2px solid #528bff;
+  transition-duration: .1s;
+}
+pre.editor-colors .gutter .line-number {
+  color: #636d83;
+  -webkit-font-smoothing: antialiased;
+}
+pre.editor-colors .gutter .line-number.cursor-line {
+  color: #abb2bf;
+  background-color: #2c313a;
+}
+pre.editor-colors .gutter .line-number.cursor-line-no-selection {
+  background-color: transparent;
+}
+pre.editor-colors .gutter .line-number .icon-right {
+  color: #abb2bf;
+}
+pre.editor-colors .gutter:not(.git-diff-icon) .line-number.git-line-removed.git-line-removed::before {
+  bottom: -3px;
+}
+pre.editor-colors .gutter:not(.git-diff-icon) .line-number.git-line-removed::after {
+  content: "";
+  position: absolute;
+  left: 0px;
+  bottom: 0px;
+  width: 25px;
+  border-bottom: 1px dotted rgba(224, 82, 82, 0.5);
+  pointer-events: none;
+}
+pre.editor-colors .gutter .line-number.folded,
+pre.editor-colors .gutter .line-number:after,
+pre.editor-colors .fold-marker:after {
+  color: #abb2bf;
+}
+.syntax--comment {
+  color: #5c6370;
+  font-style: italic;
+}
+.syntax--comment .syntax--markup.syntax--link {
+  color: #5c6370;
+}
+.syntax--entity.syntax--name.syntax--type {
+  color: #e5c07b;
+}
+.syntax--entity.syntax--other.syntax--inherited-class {
+  color: #98c379;
+}
+.syntax--keyword {
+  color: #c678dd;
+}
+.syntax--keyword.syntax--control {
+  color: #c678dd;
+}
+.syntax--keyword.syntax--operator {
+  color: #abb2bf;
+}
+.syntax--keyword.syntax--other.syntax--special-method {
+  color: #61afef;
+}
+.syntax--keyword.syntax--other.syntax--unit {
+  color: #d19a66;
+}
+.syntax--storage {
+  color: #c678dd;
+}
+.syntax--storage.syntax--type.syntax--annotation,
+.syntax--storage.syntax--type.syntax--primitive {
+  color: #c678dd;
+}
+.syntax--storage.syntax--modifier.syntax--package,
+.syntax--storage.syntax--modifier.syntax--import {
+  color: #abb2bf;
+}
+.syntax--constant {
+  color: #d19a66;
+}
+.syntax--constant.syntax--variable {
+  color: #d19a66;
+}
+.syntax--constant.syntax--character.syntax--escape {
+  color: #56b6c2;
+}
+.syntax--constant.syntax--numeric {
+  color: #d19a66;
+}
+.syntax--constant.syntax--other.syntax--color {
+  color: #56b6c2;
+}
+.syntax--constant.syntax--other.syntax--symbol {
+  color: #56b6c2;
+}
+.syntax--variable {
+  color: #e06c75;
+}
+.syntax--variable.syntax--interpolation {
+  color: #be5046;
+}
+.syntax--variable.syntax--parameter {
+  color: #abb2bf;
+}
+.syntax--string {
+  color: #98c379;
+}
+.syntax--string.syntax--regexp {
+  color: #56b6c2;
+}
+.syntax--string.syntax--regexp .syntax--source.syntax--ruby.syntax--embedded {
+  color: #e5c07b;
+}
+.syntax--string.syntax--other.syntax--link {
+  color: #e06c75;
+}
+.syntax--punctuation.syntax--definition.syntax--comment {
+  color: #5c6370;
+}
+.syntax--punctuation.syntax--definition.syntax--method-parameters,
+.syntax--punctuation.syntax--definition.syntax--function-parameters,
+.syntax--punctuation.syntax--definition.syntax--parameters,
+.syntax--punctuation.syntax--definition.syntax--separator,
+.syntax--punctuation.syntax--definition.syntax--seperator,
+.syntax--punctuation.syntax--definition.syntax--array {
+  color: #abb2bf;
+}
+.syntax--punctuation.syntax--definition.syntax--heading,
+.syntax--punctuation.syntax--definition.syntax--identity {
+  color: #61afef;
+}
+.syntax--punctuation.syntax--definition.syntax--bold {
+  color: #e5c07b;
+  font-weight: bold;
+}
+.syntax--punctuation.syntax--definition.syntax--italic {
+  color: #c678dd;
+  font-style: italic;
+}
+.syntax--punctuation.syntax--section.syntax--embedded {
+  color: #be5046;
+}
+.syntax--punctuation.syntax--section.syntax--method,
+.syntax--punctuation.syntax--section.syntax--class,
+.syntax--punctuation.syntax--section.syntax--inner-class {
+  color: #abb2bf;
+}
+.syntax--support.syntax--class {
+  color: #e5c07b;
+}
+.syntax--support.syntax--type {
+  color: #56b6c2;
+}
+.syntax--support.syntax--function {
+  color: #56b6c2;
+}
+.syntax--support.syntax--function.syntax--any-method {
+  color: #61afef;
+}
+.syntax--entity.syntax--name.syntax--function {
+  color: #61afef;
+}
+.syntax--entity.syntax--name.syntax--class,
+.syntax--entity.syntax--name.syntax--type.syntax--class {
+  color: #e5c07b;
+}
+.syntax--entity.syntax--name.syntax--section {
+  color: #61afef;
+}
+.syntax--entity.syntax--name.syntax--tag {
+  color: #e06c75;
+}
+.syntax--entity.syntax--other.syntax--attribute-name {
+  color: #d19a66;
+}
+.syntax--entity.syntax--other.syntax--attribute-name.syntax--id {
+  color: #61afef;
+}
+.syntax--meta.syntax--class {
+  color: #e5c07b;
+}
+.syntax--meta.syntax--class.syntax--body {
+  color: #abb2bf;
+}
+.syntax--meta.syntax--method-call,
+.syntax--meta.syntax--method {
+  color: #abb2bf;
+}
+.syntax--meta.syntax--definition.syntax--variable {
+  color: #e06c75;
+}
+.syntax--meta.syntax--link {
+  color: #d19a66;
+}
+.syntax--meta.syntax--require {
+  color: #61afef;
+}
+.syntax--meta.syntax--selector {
+  color: #c678dd;
+}
+.syntax--meta.syntax--separator {
+  background-color: #373b41;
+  color: #abb2bf;
+}
+.syntax--meta.syntax--tag {
+  color: #abb2bf;
+}
+.syntax--underline {
+  text-decoration: underline;
+}
+.syntax--none {
+  color: #abb2bf;
+}
+.syntax--invalid.syntax--deprecated {
+  color: #523d14 !important;
+  background-color: #e0c285 !important;
+}
+.syntax--invalid.syntax--illegal {
+  color: white !important;
+  background-color: #e05252 !important;
+}
+.syntax--markup.syntax--bold {
+  color: #d19a66;
+  font-weight: bold;
+}
+.syntax--markup.syntax--changed {
+  color: #c678dd;
+}
+.syntax--markup.syntax--deleted {
+  color: #e06c75;
+}
+.syntax--markup.syntax--italic {
+  color: #c678dd;
+  font-style: italic;
+}
+.syntax--markup.syntax--heading {
+  color: #e06c75;
+}
+.syntax--markup.syntax--heading .syntax--punctuation.syntax--definition.syntax--heading {
+  color: #61afef;
+}
+.syntax--markup.syntax--link {
+  color: #56b6c2;
+}
+.syntax--markup.syntax--inserted {
+  color: #98c379;
+}
+.syntax--markup.syntax--quote {
+  color: #d19a66;
+}
+.syntax--markup.syntax--raw {
+  color: #98c379;
+}
+.syntax--source.syntax--c .syntax--keyword.syntax--operator {
+  color: #c678dd;
+}
+.syntax--source.syntax--cpp .syntax--keyword.syntax--operator {
+  color: #c678dd;
+}
+.syntax--source.syntax--cs .syntax--keyword.syntax--operator {
+  color: #c678dd;
+}
+.syntax--source.syntax--css .syntax--property-name,
+.syntax--source.syntax--css .syntax--property-value {
+  color: #828997;
+}
+.syntax--source.syntax--css .syntax--property-name.syntax--support,
+.syntax--source.syntax--css .syntax--property-value.syntax--support {
+  color: #abb2bf;
+}
+.syntax--source.syntax--gfm .syntax--markup {
+  -webkit-font-smoothing: auto;
+}
+.syntax--source.syntax--gfm .syntax--link .syntax--entity {
+  color: #61afef;
+}
+.syntax--source.syntax--go .syntax--storage.syntax--type.syntax--string {
+  color: #c678dd;
+}
+.syntax--source.syntax--ini .syntax--keyword.syntax--other.syntax--definition.syntax--ini {
+  color: #e06c75;
+}
+.syntax--source.syntax--java .syntax--storage.syntax--modifier.syntax--import {
+  color: #e5c07b;
+}
+.syntax--source.syntax--java .syntax--storage.syntax--type {
+  color: #e5c07b;
+}
+.syntax--source.syntax--java .syntax--keyword.syntax--operator.syntax--instanceof {
+  color: #c678dd;
+}
+.syntax--source.syntax--java-properties .syntax--meta.syntax--key-pair {
+  color: #e06c75;
+}
+.syntax--source.syntax--java-properties .syntax--meta.syntax--key-pair > .syntax--punctuation {
+  color: #abb2bf;
+}
+.syntax--source.syntax--js .syntax--keyword.syntax--operator {
+  color: #56b6c2;
+}
+.syntax--source.syntax--js .syntax--keyword.syntax--operator.syntax--delete,
+.syntax--source.syntax--js .syntax--keyword.syntax--operator.syntax--in,
+.syntax--source.syntax--js .syntax--keyword.syntax--operator.syntax--of,
+.syntax--source.syntax--js .syntax--keyword.syntax--operator.syntax--instanceof,
+.syntax--source.syntax--js .syntax--keyword.syntax--operator.syntax--new,
+.syntax--source.syntax--js .syntax--keyword.syntax--operator.syntax--typeof,
+.syntax--source.syntax--js .syntax--keyword.syntax--operator.syntax--void {
+  color: #c678dd;
+}
+.syntax--source.syntax--json .syntax--meta.syntax--structure.syntax--dictionary.syntax--json > .syntax--string.syntax--quoted.syntax--json {
+  color: #e06c75;
+}
+.syntax--source.syntax--json .syntax--meta.syntax--structure.syntax--dictionary.syntax--json > .syntax--string.syntax--quoted.syntax--json > .syntax--punctuation.syntax--string {
+  color: #e06c75;
+}
+.syntax--source.syntax--json .syntax--meta.syntax--structure.syntax--dictionary.syntax--json > .syntax--value.syntax--json > .syntax--string.syntax--quoted.syntax--json,
+.syntax--source.syntax--json .syntax--meta.syntax--structure.syntax--array.syntax--json > .syntax--value.syntax--json > .syntax--string.syntax--quoted.syntax--json,
+.syntax--source.syntax--json .syntax--meta.syntax--structure.syntax--dictionary.syntax--json > .syntax--value.syntax--json > .syntax--string.syntax--quoted.syntax--json > .syntax--punctuation,
+.syntax--source.syntax--json .syntax--meta.syntax--structure.syntax--array.syntax--json > .syntax--value.syntax--json > .syntax--string.syntax--quoted.syntax--json > .syntax--punctuation {
+  color: #98c379;
+}
+.syntax--source.syntax--json .syntax--meta.syntax--structure.syntax--dictionary.syntax--json > .syntax--constant.syntax--language.syntax--json,
+.syntax--source.syntax--json .syntax--meta.syntax--structure.syntax--array.syntax--json > .syntax--constant.syntax--language.syntax--json {
+  color: #56b6c2;
+}
+.syntax--source.syntax--ruby .syntax--constant.syntax--other.syntax--symbol > .syntax--punctuation {
+  color: inherit;
+}
+.syntax--source.syntax--python .syntax--keyword.syntax--operator.syntax--logical.syntax--python {
+  color: #c678dd;
+}
+.syntax--source.syntax--python .syntax--variable.syntax--parameter {
+  color: #d19a66;
+}
+</style>
+  </head>
+  <body class='markdown-preview' data-use-github-style><h1 id="-c-">深入探索C++对象模型</h1>
+<hr>
+<h1 id="-1-object-lessions-">第1章 关于对象(Object Lessions)</h1>
+<h2 id="c-">C++加上封装后的布局成本</h2>
+<p>以一个Point3D类为例子，分析了C++相对于C的布局成本。
+在C语言中，Point3D的实现为：</p>
+<pre class="editor-colors lang-c"><div class="line"><span class="syntax--source syntax--c"><span class="syntax--storage syntax--type syntax--c"><span>typedef</span></span><span>&nbsp;</span><span class="syntax--storage syntax--type syntax--c"><span>struct</span></span><span>&nbsp;point3d</span><span class="syntax--meta syntax--block syntax--c"><span class="syntax--punctuation syntax--section syntax--block syntax--begin syntax--bracket syntax--curly syntax--c"><span>{</span></span></span></span></div><div class="line"><span class="syntax--source syntax--c"><span class="syntax--meta syntax--block syntax--c"><span>&nbsp;&nbsp;</span><span class="syntax--storage syntax--type syntax--c"><span>float</span></span><span>&nbsp;x</span><span class="syntax--punctuation syntax--terminator syntax--statement syntax--c"><span>;</span></span></span></span></div><div class="line"><span class="syntax--source syntax--c"><span class="syntax--meta syntax--block syntax--c"><span>&nbsp;&nbsp;</span><span class="syntax--storage syntax--type syntax--c"><span>float</span></span><span>&nbsp;y</span><span class="syntax--punctuation syntax--terminator syntax--statement syntax--c"><span>;</span></span></span></span></div><div class="line"><span class="syntax--source syntax--c"><span class="syntax--meta syntax--block syntax--c"><span>&nbsp;&nbsp;</span><span class="syntax--storage syntax--type syntax--c"><span>float</span></span><span>&nbsp;z</span><span class="syntax--punctuation syntax--terminator syntax--statement syntax--c"><span>;</span></span></span></span></div><div class="line"><span class="syntax--source syntax--c"><span class="syntax--meta syntax--block syntax--c"><span class="syntax--punctuation syntax--section syntax--block syntax--end syntax--bracket syntax--curly syntax--c"><span>}</span></span></span><span>Point3D</span><span class="syntax--punctuation syntax--terminator syntax--statement syntax--c"><span>;</span></span></span></div><div class="line"><span class="syntax--source syntax--c"><span>&nbsp;</span></span></div><div class="line"><span class="syntax--source syntax--c"><span class="syntax--meta syntax--preprocessor syntax--macro syntax--c"><span class="syntax--keyword syntax--control syntax--directive syntax--define syntax--c"><span class="syntax--punctuation syntax--definition syntax--directive syntax--c"><span>#</span></span><span>define</span></span><span>&nbsp;</span><span class="syntax--entity syntax--name syntax--function syntax--preprocessor syntax--c"><span>Point3d_print</span></span><span class="syntax--punctuation syntax--definition syntax--parameters syntax--begin syntax--c"><span>(</span></span><span class="syntax--variable syntax--parameter syntax--preprocessor syntax--c"><span>pd</span></span><span class="syntax--punctuation syntax--definition syntax--parameters syntax--end syntax--c"><span>)</span></span><span>&nbsp;</span><span class="syntax--constant syntax--character syntax--escape syntax--line-continuation syntax--c"><span>\</span></span><span>&nbsp;</span></span></span></div><div class="line"><span class="syntax--source syntax--c"><span class="syntax--meta syntax--preprocessor syntax--macro syntax--c"><span class="syntax--punctuation syntax--whitespace syntax--support syntax--function syntax--leading syntax--c"><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span></span><span class="syntax--support syntax--function syntax--C99 syntax--c"><span>printf</span></span><span class="syntax--punctuation syntax--section syntax--parens syntax--begin syntax--bracket syntax--round syntax--c"><span>(</span></span><span class="syntax--string syntax--quoted syntax--double syntax--c"><span class="syntax--punctuation syntax--definition syntax--string syntax--begin syntax--c"><span>&quot;</span></span><span>(</span><span class="syntax--constant syntax--other syntax--placeholder syntax--c"><span>%g</span></span><span>,&nbsp;</span><span class="syntax--constant syntax--other syntax--placeholder syntax--c"><span>%g</span></span><span>,&nbsp;</span><span class="syntax--constant syntax--other syntax--placeholder syntax--c"><span>%g</span></span><span>)</span><span class="syntax--punctuation syntax--definition syntax--string syntax--end syntax--c"><span>&quot;</span></span></span><span class="syntax--punctuation syntax--separator syntax--delimiter syntax--c"><span>,</span></span><span>&nbsp;pd</span><span class="syntax--punctuation syntax--separator syntax--pointer-access syntax--c"><span>-&gt;</span></span><span class="syntax--variable syntax--other syntax--member syntax--c"><span>x</span></span><span class="syntax--punctuation syntax--separator syntax--delimiter syntax--c"><span>,</span></span><span>&nbsp;pd</span><span class="syntax--punctuation syntax--separator syntax--pointer-access syntax--c"><span>-&gt;</span></span><span class="syntax--variable syntax--other syntax--member syntax--c"><span>y</span></span><span class="syntax--punctuation syntax--separator syntax--delimiter syntax--c"><span>,</span></span><span>&nbsp;pd</span><span class="syntax--punctuation syntax--separator syntax--pointer-access syntax--c"><span>-&gt;</span></span><span class="syntax--variable syntax--other syntax--member syntax--c"><span>z</span></span><span class="syntax--punctuation syntax--section syntax--parens syntax--end syntax--bracket syntax--round syntax--c"><span>)</span></span><span class="syntax--punctuation syntax--terminator syntax--statement syntax--c"><span>;</span></span></span></span></div><div class="line"><span class="syntax--source syntax--c"><span>&nbsp;</span></span></div><div class="line"><span class="syntax--source syntax--c"><span class="syntax--meta syntax--preprocessor syntax--macro syntax--c"><span class="syntax--keyword syntax--control syntax--directive syntax--define syntax--c"><span class="syntax--punctuation syntax--definition syntax--directive syntax--c"><span>#</span></span><span>define</span></span><span>&nbsp;</span><span class="syntax--entity syntax--name syntax--function syntax--preprocessor syntax--c"><span>X</span></span><span class="syntax--punctuation syntax--definition syntax--parameters syntax--begin syntax--c"><span>(</span></span><span class="syntax--variable syntax--parameter syntax--preprocessor syntax--c"><span>p</span><span class="syntax--punctuation syntax--separator syntax--parameters syntax--c"><span>,</span></span><span>&nbsp;xval</span></span><span class="syntax--punctuation syntax--definition syntax--parameters syntax--end syntax--c"><span>)</span></span><span>&nbsp;</span><span class="syntax--punctuation syntax--section syntax--parens syntax--begin syntax--bracket syntax--round syntax--c"><span>(</span></span><span>p</span><span class="syntax--punctuation syntax--separator syntax--dot-access syntax--c"><span>.</span></span><span class="syntax--variable syntax--other syntax--member syntax--c"><span>x</span></span><span class="syntax--punctuation syntax--section syntax--parens syntax--end syntax--bracket syntax--round syntax--c"><span>)</span></span><span>&nbsp;</span><span class="syntax--keyword syntax--operator syntax--assignment syntax--c"><span>=</span></span><span>&nbsp;</span><span class="syntax--punctuation syntax--section syntax--parens syntax--begin syntax--bracket syntax--round syntax--c"><span>(</span></span><span>xval</span><span class="syntax--punctuation syntax--section syntax--parens syntax--end syntax--bracket syntax--round syntax--c"><span>)</span></span><span class="syntax--punctuation syntax--terminator syntax--statement syntax--c"><span>;</span></span></span></span></div><div class="line"><span class="syntax--source syntax--c"><span class="syntax--comment syntax--line syntax--double-slash syntax--cpp"><span class="syntax--punctuation syntax--definition syntax--comment syntax--cpp"><span>//</span></span><span>c语言中可以直接对Point3D对象直接存取。</span></span></span></div></pre>
+<p>在C++中有很多种实现方式，举一个模板的例子：</p>
+<pre class="editor-colors lang-c++"><div class="line"><span class="syntax--source syntax--cpp"><span class="syntax--storage syntax--type syntax--template syntax--cpp"><span>template&nbsp;</span></span><span class="syntax--keyword syntax--operator syntax--comparison syntax--c"><span>&lt;</span></span><span>&nbsp;</span><span class="syntax--meta syntax--class-struct-block syntax--cpp"><span class="syntax--storage syntax--type syntax--cpp"><span>class</span></span><span>&nbsp;</span><span class="syntax--entity syntax--name syntax--type syntax--cpp"><span>type</span></span><span>&nbsp;</span></span><span class="syntax--keyword syntax--operator syntax--comparison syntax--c"><span>&gt;</span></span></span></div><div class="line"><span class="syntax--source syntax--cpp"><span class="syntax--meta syntax--class-struct-block syntax--cpp"><span class="syntax--storage syntax--type syntax--cpp"><span>class</span></span><span>&nbsp;</span><span class="syntax--entity syntax--name syntax--type syntax--cpp"><span>Point3d</span></span><span class="syntax--punctuation syntax--section syntax--block syntax--begin syntax--bracket syntax--curly syntax--cpp"><span>{</span></span></span></span></div><div class="line"><span class="syntax--source syntax--cpp"><span class="syntax--meta syntax--class-struct-block syntax--cpp"><span class="syntax--storage syntax--modifier syntax--cpp"><span>public:</span></span></span></span></div><div class="line"><span class="syntax--source syntax--cpp"><span class="syntax--meta syntax--class-struct-block syntax--cpp"><span class="syntax--meta syntax--function syntax--constructor syntax--cpp"><span>&nbsp;&nbsp;</span><span class="syntax--entity syntax--name syntax--function syntax--cpp"><span>Point3D</span></span><span class="syntax--punctuation syntax--definition syntax--parameters syntax--begin syntax--c"><span>(</span></span><span>&nbsp;type&nbsp;x&nbsp;</span><span class="syntax--keyword syntax--operator syntax--assignment syntax--c"><span>=</span></span><span>&nbsp;</span><span class="syntax--constant syntax--numeric syntax--c"><span>0.0</span></span><span class="syntax--punctuation syntax--separator syntax--delimiter syntax--c"><span>,</span></span><span>&nbsp;type&nbsp;y&nbsp;</span><span class="syntax--keyword syntax--operator syntax--assignment syntax--c"><span>=</span></span><span>&nbsp;</span><span class="syntax--constant syntax--numeric syntax--c"><span>0.0</span></span><span class="syntax--punctuation syntax--separator syntax--delimiter syntax--c"><span>,</span></span><span>&nbsp;type&nbsp;z&nbsp;</span><span class="syntax--keyword syntax--operator syntax--assignment syntax--c"><span>=</span></span><span>&nbsp;</span><span class="syntax--constant syntax--numeric syntax--c"><span>0.0</span></span><span>&nbsp;</span><span class="syntax--punctuation syntax--definition syntax--parameters syntax--end syntax--c"><span>)</span></span></span></span></span></div><div class="line"><span class="syntax--source syntax--cpp"><span class="syntax--meta syntax--class-struct-block syntax--cpp"><span>&nbsp;&nbsp;:&nbsp;\</span><span class="syntax--meta syntax--function syntax--c"><span class="syntax--entity syntax--name syntax--function syntax--c"><span>_</span></span><span class="syntax--punctuation syntax--section syntax--parameters syntax--begin syntax--bracket syntax--round syntax--c"><span>(</span></span><span>x</span><span class="syntax--punctuation syntax--section syntax--parameters syntax--end syntax--bracket syntax--round syntax--c"><span>)</span></span></span><span class="syntax--punctuation syntax--separator syntax--delimiter syntax--c"><span>,</span></span><span>&nbsp;\</span><span class="syntax--meta syntax--function syntax--c"><span class="syntax--entity syntax--name syntax--function syntax--c"><span>_y</span></span><span class="syntax--punctuation syntax--section syntax--parameters syntax--begin syntax--bracket syntax--round syntax--c"><span>(</span></span><span>y</span><span class="syntax--punctuation syntax--section syntax--parameters syntax--end syntax--bracket syntax--round syntax--c"><span>)</span></span></span><span class="syntax--punctuation syntax--separator syntax--delimiter syntax--c"><span>,</span></span><span>&nbsp;\</span><span class="syntax--meta syntax--function syntax--c"><span class="syntax--entity syntax--name syntax--function syntax--c"><span>_z</span></span><span class="syntax--punctuation syntax--section syntax--parameters syntax--begin syntax--bracket syntax--round syntax--c"><span>(</span></span><span>z</span><span class="syntax--punctuation syntax--section syntax--parameters syntax--end syntax--bracket syntax--round syntax--c"><span>)</span></span></span><span class="syntax--meta syntax--block syntax--c"><span class="syntax--punctuation syntax--section syntax--block syntax--begin syntax--bracket syntax--curly syntax--c"><span>{</span></span><span class="syntax--punctuation syntax--section syntax--block syntax--end syntax--bracket syntax--curly syntax--c"><span>}</span></span></span></span></span></div><div class="line"><span class="syntax--source syntax--cpp"><span class="syntax--meta syntax--class-struct-block syntax--cpp"><span>&nbsp;&nbsp;type&nbsp;</span><span class="syntax--meta syntax--function syntax--c"><span class="syntax--entity syntax--name syntax--function syntax--c"><span>x</span></span><span class="syntax--punctuation syntax--section syntax--parameters syntax--begin syntax--bracket syntax--round syntax--c"><span>(</span></span><span class="syntax--punctuation syntax--section syntax--parameters syntax--end syntax--bracket syntax--round syntax--c"><span>)</span></span></span><span class="syntax--meta syntax--block syntax--c"><span class="syntax--punctuation syntax--section syntax--block syntax--begin syntax--bracket syntax--curly syntax--c"><span>{</span></span><span class="syntax--keyword syntax--control syntax--c"><span>return</span></span><span>&nbsp;\_x</span><span class="syntax--punctuation syntax--terminator syntax--statement syntax--c"><span>;</span></span><span class="syntax--punctuation syntax--section syntax--block syntax--end syntax--bracket syntax--curly syntax--c"><span>}</span></span></span></span></span></div><div class="line"><span class="syntax--source syntax--cpp"><span class="syntax--meta syntax--class-struct-block syntax--cpp"><span>&nbsp;&nbsp;</span><span class="syntax--storage syntax--type syntax--c"><span>void</span></span><span>&nbsp;</span><span class="syntax--meta syntax--function syntax--c"><span class="syntax--entity syntax--name syntax--function syntax--c"><span>x</span></span><span class="syntax--punctuation syntax--section syntax--parameters syntax--begin syntax--bracket syntax--round syntax--c"><span>(</span></span><span>type&nbsp;xval</span><span class="syntax--punctuation syntax--section syntax--parameters syntax--end syntax--bracket syntax--round syntax--c"><span>)</span></span></span><span class="syntax--meta syntax--block syntax--c"><span class="syntax--punctuation syntax--section syntax--block syntax--begin syntax--bracket syntax--curly syntax--c"><span>{</span></span><span>\_x&nbsp;</span><span class="syntax--keyword syntax--operator syntax--assignment syntax--c"><span>=</span></span><span>&nbsp;xval</span><span class="syntax--punctuation syntax--terminator syntax--statement syntax--c"><span>;</span></span><span class="syntax--punctuation syntax--section syntax--block syntax--end syntax--bracket syntax--curly syntax--c"><span>}</span></span></span></span></span></div><div class="line"><span class="syntax--source syntax--cpp"><span class="syntax--meta syntax--class-struct-block syntax--cpp"><span class="syntax--punctuation syntax--whitespace syntax--comment syntax--leading syntax--cpp"><span>&nbsp;&nbsp;</span></span><span class="syntax--comment syntax--line syntax--double-slash syntax--cpp"><span class="syntax--punctuation syntax--definition syntax--comment syntax--cpp"><span>//</span></span><span>...etc..</span></span></span></span></div><div class="line"><span class="syntax--source syntax--cpp"><span class="syntax--meta syntax--class-struct-block syntax--cpp"><span class="syntax--storage syntax--modifier syntax--cpp"><span>private:</span></span></span></span></div><div class="line"><span class="syntax--source syntax--cpp"><span class="syntax--meta syntax--class-struct-block syntax--cpp"><span>&nbsp;&nbsp;type&nbsp;\_x</span><span class="syntax--punctuation syntax--terminator syntax--statement syntax--c"><span>;</span></span></span></span></div><div class="line"><span class="syntax--source syntax--cpp"><span class="syntax--meta syntax--class-struct-block syntax--cpp"><span>&nbsp;&nbsp;type&nbsp;\_y</span><span class="syntax--punctuation syntax--terminator syntax--statement syntax--c"><span>;</span></span></span></span></div><div class="line"><span class="syntax--source syntax--cpp"><span class="syntax--meta syntax--class-struct-block syntax--cpp"><span>&nbsp;&nbsp;type&nbsp;\_z</span><span class="syntax--punctuation syntax--terminator syntax--statement syntax--c"><span>;</span></span></span></span></div><div class="line"><span class="syntax--source syntax--cpp"><span class="syntax--meta syntax--class-struct-block syntax--cpp"><span class="syntax--punctuation syntax--section syntax--block syntax--end syntax--bracket syntax--curly syntax--cpp"><span>}</span></span></span><span class="syntax--punctuation syntax--terminator syntax--statement syntax--c"><span>;</span></span></span></div><div class="line"><span class="syntax--source syntax--cpp"><span>&nbsp;</span></span></div><div class="line"><span class="syntax--source syntax--cpp"><span class="syntax--storage syntax--modifier syntax--c"><span>inline</span></span></span></div><div class="line"><span class="syntax--source syntax--cpp"><span class="syntax--storage syntax--type syntax--template syntax--cpp"><span>template&nbsp;</span></span><span class="syntax--keyword syntax--operator syntax--comparison syntax--c"><span>&lt;</span></span><span class="syntax--meta syntax--class-struct-block syntax--cpp"><span class="syntax--storage syntax--type syntax--cpp"><span>class</span></span><span>&nbsp;</span><span class="syntax--entity syntax--name syntax--type syntax--cpp"><span>type</span></span></span><span class="syntax--keyword syntax--operator syntax--comparison syntax--c"><span>&gt;</span></span></span></div><div class="line"><span class="syntax--source syntax--cpp"><span>ostream&nbsp;</span><span class="syntax--keyword syntax--operator syntax--c"><span>&amp;</span></span></span></div><div class="line"><span class="syntax--source syntax--cpp"><span class="syntax--keyword syntax--control syntax--cpp"><span>operator</span></span><span class="syntax--keyword syntax--operator syntax--bitwise syntax--shift syntax--c"><span>&lt;&lt;</span></span><span class="syntax--punctuation syntax--section syntax--parens syntax--begin syntax--bracket syntax--round syntax--c"><span>(</span></span><span>ostream&nbsp;</span><span class="syntax--keyword syntax--operator syntax--c"><span>&amp;</span></span><span>os</span><span class="syntax--punctuation syntax--separator syntax--delimiter syntax--c"><span>,</span></span><span>&nbsp;</span><span class="syntax--storage syntax--modifier syntax--c"><span>const</span></span><span>&nbsp;Point3d</span><span class="syntax--keyword syntax--operator syntax--comparison syntax--c"><span>&lt;</span></span><span>type</span><span class="syntax--keyword syntax--operator syntax--comparison syntax--c"><span>&gt;</span></span><span>&nbsp;</span><span class="syntax--keyword syntax--operator syntax--c"><span>&amp;</span></span><span>pt</span><span class="syntax--punctuation syntax--section syntax--parens syntax--end syntax--bracket syntax--round syntax--c"><span>)</span></span></span></div><div class="line"><span class="syntax--source syntax--cpp"><span class="syntax--meta syntax--block syntax--c"><span class="syntax--punctuation syntax--section syntax--block syntax--begin syntax--bracket syntax--curly syntax--c"><span>{</span></span></span></span></div><div class="line"><span class="syntax--source syntax--cpp"><span class="syntax--meta syntax--block syntax--c"><span>&nbsp;&nbsp;os&nbsp;</span><span class="syntax--keyword syntax--operator syntax--bitwise syntax--shift syntax--c"><span>&lt;&lt;</span></span><span>&nbsp;</span><span class="syntax--string syntax--quoted syntax--double syntax--cpp"><span class="syntax--punctuation syntax--definition syntax--string syntax--begin syntax--cpp"><span>&quot;</span></span><span>(</span><span class="syntax--punctuation syntax--definition syntax--string syntax--end syntax--cpp"><span>&quot;</span></span></span><span>&nbsp;</span><span class="syntax--keyword syntax--operator syntax--bitwise syntax--shift syntax--c"><span>&lt;&lt;</span></span><span>&nbsp;pt</span><span class="syntax--punctuation syntax--separator syntax--dot-access syntax--c"><span>.</span></span><span>\_x&nbsp;</span><span class="syntax--keyword syntax--operator syntax--bitwise syntax--shift syntax--c"><span>&lt;&lt;</span></span><span>&nbsp;pt</span><span class="syntax--punctuation syntax--separator syntax--dot-access syntax--c"><span>.</span></span><span>\_y&nbsp;</span><span class="syntax--keyword syntax--operator syntax--bitwise syntax--shift syntax--c"><span>&lt;&lt;</span></span><span>&nbsp;pt</span><span class="syntax--punctuation syntax--separator syntax--dot-access syntax--c"><span>.</span></span><span>\_z&nbsp;</span><span class="syntax--keyword syntax--operator syntax--bitwise syntax--shift syntax--c"><span>&lt;&lt;</span></span><span>&nbsp;</span><span class="syntax--string syntax--quoted syntax--double syntax--cpp"><span class="syntax--punctuation syntax--definition syntax--string syntax--begin syntax--cpp"><span>&quot;</span></span><span>)</span><span class="syntax--punctuation syntax--definition syntax--string syntax--end syntax--cpp"><span>&quot;</span></span></span><span class="syntax--punctuation syntax--terminator syntax--statement syntax--c"><span>;</span></span></span></span></div><div class="line"><span class="syntax--source syntax--cpp"><span class="syntax--meta syntax--block syntax--c"><span class="syntax--punctuation syntax--section syntax--block syntax--end syntax--bracket syntax--curly syntax--c"><span>}</span></span></span></span></div></pre>
+<p>但是实际上，class Point3d的布局成本并没有增加。</p>
+<blockquote>
+<ul>
+<li>三个data memebers直接内含在每一个class object之中，和C是一样的。</li>
+<li>而member functions虽然在class中声明，去不出现在object中。</li>
+<li>每一个non-inline member function只会诞生一个函数实体。</li>
+<li>至于每一个&quot;拥有0个或1个定义&quot;的inline function则会在其每一个使用者(模块)身上产生一个函数实体。</li>
+</ul>
+</blockquote>
+<p><strong>真正导致C++布局以及存取时间上的overhead的是virtual，包括：</strong></p>
+<blockquote>
+<ul>
+<li>virtual function机制。用以支持一个有效率的&quot;执行期绑定&quot;(runtime binding)。</li>
+<li>virtual base class。用以实现&quot;多次出现在继承体系中的base class，有一个单一而被共享的实体&quot;。</li>
+</ul>
+</blockquote>
+<p><strong>以及在多重继承下的额外负担：</strong></p>
+<blockquote>
+<ul>
+<li>一个derived class和其第二或后继之base class的转换</li>
+</ul>
+</blockquote>
+<h2 id="1-1-c-the-c-object-model-">1.1 C++对象模式(The C++ Object Model)</h2>
+<p>假设有个class Point：</p>
+<pre class="editor-colors lang-c++"><div class="line"><span class="syntax--source syntax--cpp"><span class="syntax--meta syntax--class-struct-block syntax--cpp"><span class="syntax--storage syntax--type syntax--cpp"><span>class</span></span><span>&nbsp;</span><span class="syntax--entity syntax--name syntax--type syntax--cpp"><span>Point</span></span><span class="syntax--punctuation syntax--section syntax--block syntax--begin syntax--bracket syntax--curly syntax--cpp"><span>{</span></span></span></span></div><div class="line"><span class="syntax--source syntax--cpp"><span class="syntax--meta syntax--class-struct-block syntax--cpp"><span class="syntax--storage syntax--modifier syntax--cpp"><span>public:</span></span></span></span></div><div class="line"><span class="syntax--source syntax--cpp"><span class="syntax--meta syntax--class-struct-block syntax--cpp"><span class="syntax--meta syntax--function syntax--constructor syntax--cpp"><span>&nbsp;&nbsp;</span><span class="syntax--entity syntax--name syntax--function syntax--cpp"><span>Point</span></span><span class="syntax--punctuation syntax--definition syntax--parameters syntax--begin syntax--c"><span>(</span></span><span class="syntax--storage syntax--type syntax--c"><span>float</span></span><span>&nbsp;xval</span><span class="syntax--punctuation syntax--definition syntax--parameters syntax--end syntax--c"><span>)</span></span></span><span class="syntax--punctuation syntax--terminator syntax--statement syntax--c"><span>;</span></span></span></span></div><div class="line"><span class="syntax--source syntax--cpp"><span class="syntax--meta syntax--class-struct-block syntax--cpp"><span>&nbsp;&nbsp;</span><span class="syntax--storage syntax--modifier syntax--cpp"><span>virtual</span></span><span>&nbsp;</span><span class="syntax--meta syntax--function syntax--destructor syntax--cpp"><span class="syntax--entity syntax--name syntax--function syntax--cpp"><span>~Point</span></span><span class="syntax--punctuation syntax--definition syntax--parameters syntax--begin syntax--c"><span>(</span></span><span class="syntax--punctuation syntax--definition syntax--parameters syntax--end syntax--c"><span>)</span></span></span><span class="syntax--punctuation syntax--terminator syntax--statement syntax--c"><span>;</span></span></span></span></div><div class="line"><span class="syntax--source syntax--cpp"><span class="syntax--meta syntax--class-struct-block syntax--cpp"><span>&nbsp;</span></span></span></div><div class="line"><span class="syntax--source syntax--cpp"><span class="syntax--meta syntax--class-struct-block syntax--cpp"><span>&nbsp;&nbsp;</span><span class="syntax--storage syntax--type syntax--c"><span>float</span></span><span>&nbsp;</span><span class="syntax--meta syntax--function syntax--c"><span class="syntax--entity syntax--name syntax--function syntax--c"><span>x</span></span><span class="syntax--punctuation syntax--section syntax--parameters syntax--begin syntax--bracket syntax--round syntax--c"><span>(</span></span><span class="syntax--punctuation syntax--section syntax--parameters syntax--end syntax--bracket syntax--round syntax--c"><span>)</span></span><span class="syntax--storage syntax--modifier syntax--c"><span>const</span></span><span class="syntax--punctuation syntax--terminator syntax--statement syntax--c"><span>;</span></span></span></span></span></div><div class="line"><span class="syntax--source syntax--cpp"><span class="syntax--meta syntax--class-struct-block syntax--cpp"><span class="syntax--meta syntax--function syntax--c"><span>&nbsp;&nbsp;</span><span class="syntax--storage syntax--modifier syntax--c"><span>static</span></span><span>&nbsp;</span><span class="syntax--storage syntax--type syntax--c"><span>int</span></span><span>&nbsp;</span><span class="syntax--entity syntax--name syntax--function syntax--c"><span>PointCount</span></span><span class="syntax--punctuation syntax--section syntax--parameters syntax--begin syntax--bracket syntax--round syntax--c"><span>(</span></span><span class="syntax--punctuation syntax--section syntax--parameters syntax--end syntax--bracket syntax--round syntax--c"><span>)</span></span></span><span class="syntax--punctuation syntax--terminator syntax--statement syntax--c"><span>;</span></span></span></span></div><div class="line"><span class="syntax--source syntax--cpp"><span class="syntax--meta syntax--class-struct-block syntax--cpp"><span>&nbsp;</span></span></span></div><div class="line"><span class="syntax--source syntax--cpp"><span class="syntax--meta syntax--class-struct-block syntax--cpp"><span class="syntax--storage syntax--modifier syntax--cpp"><span>protected:</span></span></span></span></div><div class="line"><span class="syntax--source syntax--cpp"><span class="syntax--meta syntax--class-struct-block syntax--cpp"><span>&nbsp;&nbsp;</span><span class="syntax--storage syntax--modifier syntax--cpp"><span>virtual</span></span><span>&nbsp;ostream</span><span class="syntax--keyword syntax--operator syntax--c"><span>&amp;</span></span></span></span></div><div class="line"><span class="syntax--source syntax--cpp"><span class="syntax--meta syntax--class-struct-block syntax--cpp"><span class="syntax--meta syntax--function syntax--constructor syntax--cpp"><span>&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="syntax--entity syntax--name syntax--function syntax--cpp"><span>print</span></span><span class="syntax--punctuation syntax--definition syntax--parameters syntax--begin syntax--c"><span>(</span></span><span>ostream&nbsp;</span><span class="syntax--keyword syntax--operator syntax--c"><span>&amp;</span></span><span>os</span><span class="syntax--punctuation syntax--definition syntax--parameters syntax--end syntax--c"><span>)</span></span></span><span class="syntax--storage syntax--modifier syntax--c"><span>const</span></span><span class="syntax--punctuation syntax--terminator syntax--statement syntax--c"><span>;</span></span></span></span></div><div class="line"><span class="syntax--source syntax--cpp"><span class="syntax--meta syntax--class-struct-block syntax--cpp"><span>&nbsp;</span></span></span></div><div class="line"><span class="syntax--source syntax--cpp"><span class="syntax--meta syntax--class-struct-block syntax--cpp"><span>&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="syntax--storage syntax--type syntax--c"><span>float</span></span><span>&nbsp;x</span><span class="syntax--punctuation syntax--terminator syntax--statement syntax--c"><span>;</span></span></span></span></div><div class="line"><span class="syntax--source syntax--cpp"><span class="syntax--meta syntax--class-struct-block syntax--cpp"><span>&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="syntax--storage syntax--modifier syntax--c"><span>static</span></span><span>&nbsp;</span><span class="syntax--storage syntax--type syntax--c"><span>int</span></span><span>&nbsp;point_count</span><span class="syntax--punctuation syntax--terminator syntax--statement syntax--c"><span>;</span></span></span></span></div><div class="line"><span class="syntax--source syntax--cpp"><span class="syntax--meta syntax--class-struct-block syntax--cpp"><span class="syntax--punctuation syntax--section syntax--block syntax--end syntax--bracket syntax--curly syntax--cpp"><span>}</span></span><span class="syntax--invalid syntax--illegal syntax--you-forgot-semicolon syntax--cpp"><span>&nbsp;</span></span></span></span></div></pre>
+<p>那么它在机器中如何表示呢？也就说如何模塑(modeling)出各种data members和function members呢？下面介绍<em>三种对象模型</em>。</p>
+<h3 id="-a-simple-object-model-"><strong>简单对象模型(A Simple Object Model)</strong></h3>
+<blockquote>
+<ul>
+<li><strong>简单对象模型的设计理念</strong>：尽量降低C++编译器设计的复杂度，赔上空间和执行效率。在简单模型中，一个object是一系列的slots，每个slot指向一个member。members按照其声明的顺序，胳臂指定一个slot(即每个data memeber或function member都有自己的一个slot)。</li>
+</ul>
+</blockquote>
+<p><img src="/home/hans_chen/&#x6587;&#x6863;/markdown/C++/&#x7B80;&#x5355;&#x5BF9;&#x8C61;&#x6A21;&#x578B;.png" alt="&#x7B80;&#x5355;&#x5BF9;&#x8C61;&#x6A21;&#x578B;"></p>
+<blockquote>
+<ul>
+<li><strong>简单对象模型的优点</strong>：简单对象模型中members本身并不存放在object中，只有<em>指向member的指针</em>才放在object中，这样做所有的members无论是什么类型都可以通过索引获取。虽然该模型没有应用于实际产品，不过索引或slot数目的观念倒是被应用到了C++的&quot;指向成员的指针&quot;观念之中。</li>
+</ul>
+</blockquote>
+<h2 id="-a-table-driven-object-model-">表格驱动对象模型(A Table-driven Object Model)</h2>
+<blockquote>
+<ul>
+<li>为了对所有classes的所有objects都有一只的表达方式，表格驱动对象模型是把所有与members相关的信息抽出来，放在一个data member table和一个member function table之中，class object本身则内含只想着两个表格的指针。Function member table是一系列的slots，么一个slot只出一个member function；Data member table则直接含有data本身。</li>
+</ul>
+</blockquote>
+<p><img src="/home/hans_chen/&#x6587;&#x6863;/markdown/C++/&#x8868;&#x683C;&#x9A71;&#x52A8;&#x5BF9;&#x8C61;&#x6A21;&#x578B;.png" alt="&#x8868;&#x683C;&#x9A71;&#x52A8;&#x5BF9;&#x8C61;&#x6A21;&#x578B;"></p>
+<blockquote>
+<ul>
+<li><strong>表格驱动对象模型的优点</strong>：虽然表格驱动对象模型也没有真正应用于C++编译器上，但是function member table这个观念却成为支持virtual functions的一个有效方案。并且，接下来可以看到，在nonstatic data member有所修改的情况下，由于表格驱动对象模型多了一层间接性，它比C++对象模型更具有弹性(但是这种弹性是通过付出空间和执行效率两方面的代价获得的)。</li>
+</ul>
+</blockquote>
+<h2 id="__c-the-c-object-model-__"><strong>C++对象模型(The C++ Object Model)</strong></h2>
+<p><code>Stroustrup是如何设计C++对象模型的呢？</code></p>
+<blockquote>
+<ul>
+<li>nonstatic data members被配置与每一个class object中</li>
+<li>static data members则被存放在所有的class object之外</li>
+<li>static和nonstatic function members也被存放在所有的class object之外。</li>
+<li>virtual functions则以以下两个步骤支持之：<blockquote>
+<ul>
+<li>每一个class产生出一堆指向virtual functions的指针，放在表格之中。这个表格被称为<strong>virtual table(vtbl)</strong>。</li>
+<li>每一个class object被添加了一个指针(通常被称为vptr)，指向相关的virtual table。vptr的设定和重置都有每一个class的constructor、destructor和copy assignment运算符自动完成(详见第5章)。每一个class所关联的<em>type_info object</em>(用以支持RTTI)也经由virtual table被指出来，并且通常放在表格的第一个slot处。</li>
+</ul>
+</blockquote>
+</li>
+</ul>
+</blockquote>
+<p><img src="/home/hans_chen/&#x6587;&#x6863;/markdown/C++/C++&#x5BF9;&#x8C61;&#x6A21;&#x578B;.png" alt="C++&#x5BF9;&#x8C61;&#x6A21;&#x578B;"></p>
+<blockquote>
+<ul>
+<li>C++对象模型的有点：在空间占用和存取时间上具有更高的效率</li>
+<li>C++对象模型的缺点：如果应用程序代码本身未曾改变，但是用到的class objects的nonstatic data members有所修改(可能是增加、移除或更改)，那么那些用程序代码同样得重新编译。</li>
+</ul>
+</blockquote>
+<h3 id="__-adding-inheritance-__"><strong>加上继承(Adding Inheritance)</strong></h3>
+<p>C++支持单一继承：</p>
+<pre class="editor-colors lang-c++"><div class="line"><span class="syntax--source syntax--cpp"><span class="syntax--meta syntax--class-struct-block syntax--cpp"><span class="syntax--storage syntax--type syntax--cpp"><span>class</span></span><span>&nbsp;</span><span class="syntax--entity syntax--name syntax--type syntax--cpp"><span>Library_materials</span></span><span class="syntax--punctuation syntax--section syntax--block syntax--begin syntax--bracket syntax--curly syntax--cpp"><span>{</span></span><span class="syntax--punctuation syntax--section syntax--block syntax--end syntax--bracket syntax--curly syntax--cpp"><span>}</span></span></span><span class="syntax--punctuation syntax--terminator syntax--statement syntax--c"><span>;</span></span></span></div><div class="line"><span class="syntax--source syntax--cpp"><span class="syntax--meta syntax--class-struct-block syntax--cpp"><span class="syntax--storage syntax--type syntax--cpp"><span>class</span></span><span>&nbsp;</span><span class="syntax--entity syntax--name syntax--type syntax--cpp"><span>Book</span></span><span>&nbsp;:&nbsp;</span><span class="syntax--storage syntax--type syntax--modifier syntax--cpp"><span>public</span></span><span>&nbsp;</span><span class="syntax--entity syntax--name syntax--type syntax--inherited syntax--cpp"><span>Library_materials</span></span><span class="syntax--punctuation syntax--section syntax--block syntax--begin syntax--bracket syntax--curly syntax--cpp"><span>{</span></span><span class="syntax--punctuation syntax--section syntax--block syntax--end syntax--bracket syntax--curly syntax--cpp"><span>}</span></span></span><span class="syntax--punctuation syntax--terminator syntax--statement syntax--c"><span>;</span></span></span></div><div class="line"><span class="syntax--source syntax--cpp"><span class="syntax--meta syntax--class-struct-block syntax--cpp"><span class="syntax--storage syntax--type syntax--cpp"><span>class</span></span><span>&nbsp;</span><span class="syntax--entity syntax--name syntax--type syntax--cpp"><span>Rental_book</span></span><span>&nbsp;:&nbsp;</span><span class="syntax--storage syntax--type syntax--modifier syntax--cpp"><span>public</span></span><span>&nbsp;</span><span class="syntax--entity syntax--name syntax--type syntax--inherited syntax--cpp"><span>Book</span></span><span class="syntax--punctuation syntax--section syntax--block syntax--begin syntax--bracket syntax--curly syntax--cpp"><span>{</span></span><span class="syntax--punctuation syntax--section syntax--block syntax--end syntax--bracket syntax--curly syntax--cpp"><span>}</span></span></span><span class="syntax--punctuation syntax--terminator syntax--statement syntax--c"><span>;</span></span></span></div></pre>
+<p>C++也支持多重继承：</p>
+<pre class="editor-colors lang-c++"><div class="line"><span class="syntax--source syntax--cpp"><span class="syntax--comment syntax--line syntax--double-slash syntax--cpp"><span class="syntax--punctuation syntax--definition syntax--comment syntax--cpp"><span>//</span></span><span>标准版之前的iostream实现方式</span></span></span></div><div class="line"><span class="syntax--source syntax--cpp"><span class="syntax--meta syntax--class-struct-block syntax--cpp"><span class="syntax--storage syntax--type syntax--cpp"><span>class</span></span><span>&nbsp;</span><span class="syntax--entity syntax--name syntax--type syntax--cpp"><span>iostream</span></span><span>:</span></span></span></div><div class="line"><span class="syntax--source syntax--cpp"><span class="syntax--meta syntax--class-struct-block syntax--cpp"><span>&nbsp;&nbsp;public&nbsp;istream</span><span class="syntax--punctuation syntax--separator syntax--delimiter syntax--c"><span>,</span></span></span></span></div><div class="line"><span class="syntax--source syntax--cpp"><span class="syntax--meta syntax--class-struct-block syntax--cpp"><span>&nbsp;&nbsp;public&nbsp;ostream&nbsp;</span><span class="syntax--punctuation syntax--section syntax--block syntax--begin syntax--bracket syntax--curly syntax--cpp"><span>{</span></span><span class="syntax--punctuation syntax--section syntax--block syntax--end syntax--bracket syntax--curly syntax--cpp"><span>}</span></span></span><span class="syntax--punctuation syntax--terminator syntax--statement syntax--c"><span>;</span></span></span></div></pre>
+<p>甚至，<strong>C++继承关系也可以指定为虚拟(virtual，也就是共享的意思)</strong>：</p>
+<pre class="editor-colors lang-c++"><div class="line"><span class="syntax--source syntax--cpp"><span class="syntax--meta syntax--class-struct-block syntax--cpp"><span class="syntax--storage syntax--type syntax--cpp"><span>class</span></span><span>&nbsp;</span><span class="syntax--entity syntax--name syntax--type syntax--cpp"><span>istream</span></span><span>&nbsp;:&nbsp;</span><span class="syntax--storage syntax--modifier syntax--cpp"><span>virtual</span></span><span>&nbsp;public&nbsp;ios&nbsp;</span><span class="syntax--punctuation syntax--section syntax--block syntax--begin syntax--bracket syntax--curly syntax--cpp"><span>{</span></span><span class="syntax--punctuation syntax--section syntax--block syntax--end syntax--bracket syntax--curly syntax--cpp"><span>}</span></span></span><span class="syntax--punctuation syntax--terminator syntax--statement syntax--c"><span>;</span></span></span></div><div class="line"><span class="syntax--source syntax--cpp"><span class="syntax--meta syntax--class-struct-block syntax--cpp"><span class="syntax--storage syntax--type syntax--cpp"><span>class</span></span><span>&nbsp;</span><span class="syntax--entity syntax--name syntax--type syntax--cpp"><span>ostream</span></span><span>&nbsp;:&nbsp;</span><span class="syntax--storage syntax--modifier syntax--cpp"><span>virtual</span></span><span>&nbsp;public&nbsp;ios&nbsp;</span><span class="syntax--punctuation syntax--section syntax--block syntax--begin syntax--bracket syntax--curly syntax--cpp"><span>{</span></span><span class="syntax--punctuation syntax--section syntax--block syntax--end syntax--bracket syntax--curly syntax--cpp"><span>}</span></span></span><span class="syntax--punctuation syntax--terminator syntax--statement syntax--c"><span>;</span></span></span></div></pre>
+<p><img src="/home/hans_chen/&#x6587;&#x6863;/markdown/C++/&#x865A;&#x62DF;&#x7EE7;&#x627F;.png" alt="&#x865A;&#x62DF;&#x7EE7;&#x627F;"></p>
+<blockquote>
+<p><em>在虚拟继承的情况下，base class不管在继承串链中被派生多少次，永远只会存在一个实体(称为<strong>subobject</strong>)。例如在iostream之中就只有virtual ios base class的一个实体。</em></p>
+</blockquote>
+<p><code>那么derived class如何在本质上模塑其base class 的本体呢？</code></p>
+<blockquote>
+<ul>
+<li>在<code>简单对象模型</code>中，每一个base class可以被derived class object内的一个slot指出，该slot内含base class subobject的地址。这样做的缺点是，因为间接向而导致空间和存取时间上的额外负担，优点则是class object的大小不会因其base classes的改变而受影响。</li>
+<li>可以设计一种<code>base table</code>模型。在<code>base class table</code>被产生出来时，表格中的每一个slot内含一个相关的base class地址(与virtual table内含每一个virtual function的地址相似)。每一个class object内含一个bptr，它会被初始化，指向其<code>base class table</code>。这种策略的<code>主要缺点</code>是：由于间接性而导致的空间和存取时间上的额外负担；<code>有2个优点</code>：首先，每一个class object中对于继承都有一致的表现方式：每一个class object都应该在某个固定位置上安放一个base table指针，与base classes的大小伙数目无关。其次，不需要改变class objects本身，就可以放大、缩小、或更改base class tabel。</li>
+</ul>
+</blockquote>
+<p><img src="/home/hans_chen/&#x6587;&#x6863;/markdown/C++/&#x591A;&#x91CD;&#x7EE7;&#x627F;.png" alt="&#x591A;&#x91CD;&#x7EE7;&#x627F;"></p>
+<p>对于上述两种体制，&quot;间接性&quot;的级数都将因为继承的深度而增加。例如一个Rental_book需要两次简介存取才能够探取到继承自Library_materials的members，而Book只需要一次。如果在derived class内复制一个指针，只想继承串中的每一个base class，倒是可以获得一个永远不变的存取时间，当然这必须付出代价，因外需要额外的空间来放置额外的指针。</p>
+<p><code>C++最初采用的继承模型并与运用任何间接性</code>：base class subobject的data members被放置于derived class object中。这提供了对base class members最紧凑而且最有效率的存取。但是相对的缺点是：base class members的任何改变、包括增加、移除或改变类型等等，都是的所有用到&quot;此base class或其derived class之objects&quot;者必须重新编译。</p>
+<p><strong>C++ virtual base class</strong>的原始模型是在class object中为每一个有关联的virtual base class加上一个指针。(<strong>详见3.4节</strong>)</p>
+<h3 id="-how-the-object-model-effects-programs-">对象模型如何影响程序(How the Object Model Effects Programs)</h3>
+<p><code>不同的对象模型会导致&quot;现有的程序代码必须修改&quot;</code>。例如，class X定义了一个copy constructor，一个virtual destructor，和一个virtual function foo()：</p>
+<pre class="editor-colors lang-c++"><div class="line"><span class="syntax--source syntax--cpp"><span>X&nbsp;</span><span class="syntax--meta syntax--function syntax--c"><span class="syntax--entity syntax--name syntax--function syntax--c"><span>foobar</span></span><span class="syntax--punctuation syntax--section syntax--parameters syntax--begin syntax--bracket syntax--round syntax--c"><span>(</span></span><span class="syntax--punctuation syntax--section syntax--parameters syntax--end syntax--bracket syntax--round syntax--c"><span>)</span></span></span><span class="syntax--meta syntax--block syntax--c"><span class="syntax--punctuation syntax--section syntax--block syntax--begin syntax--bracket syntax--curly syntax--c"><span>{</span></span></span></span></div><div class="line"><span class="syntax--source syntax--cpp"><span class="syntax--meta syntax--block syntax--c"><span>&nbsp;&nbsp;X&nbsp;xx</span><span class="syntax--punctuation syntax--terminator syntax--statement syntax--c"><span>;</span></span></span></span></div><div class="line"><span class="syntax--source syntax--cpp"><span class="syntax--meta syntax--block syntax--c"><span>&nbsp;&nbsp;X&nbsp;</span><span class="syntax--keyword syntax--operator syntax--c"><span>*</span></span><span>px&nbsp;</span><span class="syntax--keyword syntax--operator syntax--assignment syntax--c"><span>=</span></span><span>&nbsp;</span><span class="syntax--keyword syntax--control syntax--cpp"><span>new</span></span><span>&nbsp;X</span><span class="syntax--punctuation syntax--terminator syntax--statement syntax--c"><span>;</span></span></span></span></div><div class="line"><span class="syntax--source syntax--cpp"><span class="syntax--meta syntax--block syntax--c"><span>&nbsp;</span></span></span></div><div class="line"><span class="syntax--source syntax--cpp"><span class="syntax--meta syntax--block syntax--c"><span class="syntax--punctuation syntax--whitespace syntax--comment syntax--leading syntax--cpp"><span>&nbsp;&nbsp;</span></span><span class="syntax--comment syntax--line syntax--double-slash syntax--cpp"><span class="syntax--punctuation syntax--definition syntax--comment syntax--cpp"><span>//</span></span><span>foo()是一个virtual&nbsp;function</span></span></span></span></div><div class="line"><span class="syntax--source syntax--cpp"><span class="syntax--meta syntax--block syntax--c"><span>&nbsp;&nbsp;xx</span><span class="syntax--punctuation syntax--separator syntax--dot-access syntax--c"><span>.</span></span><span class="syntax--meta syntax--function-call syntax--c"><span class="syntax--entity syntax--name syntax--function syntax--c"><span>foo</span></span><span class="syntax--punctuation syntax--section syntax--arguments syntax--begin syntax--bracket syntax--round syntax--c"><span>(</span></span><span class="syntax--punctuation syntax--section syntax--arguments syntax--end syntax--bracket syntax--round syntax--c"><span>)</span></span></span><span class="syntax--punctuation syntax--terminator syntax--statement syntax--c"><span>;</span></span></span></span></div><div class="line"><span class="syntax--source syntax--cpp"><span class="syntax--meta syntax--block syntax--c"><span>&nbsp;&nbsp;px</span><span class="syntax--punctuation syntax--separator syntax--pointer-access syntax--c"><span>-&gt;</span></span><span class="syntax--meta syntax--function-call syntax--c"><span class="syntax--entity syntax--name syntax--function syntax--c"><span>foo</span></span><span class="syntax--punctuation syntax--section syntax--arguments syntax--begin syntax--bracket syntax--round syntax--c"><span>(</span></span><span class="syntax--punctuation syntax--section syntax--arguments syntax--end syntax--bracket syntax--round syntax--c"><span>)</span></span></span><span class="syntax--punctuation syntax--terminator syntax--statement syntax--c"><span>;</span></span></span></span></div><div class="line"><span class="syntax--source syntax--cpp"><span class="syntax--meta syntax--block syntax--c"><span>&nbsp;</span></span></span></div><div class="line"><span class="syntax--source syntax--cpp"><span class="syntax--meta syntax--block syntax--c"><span>&nbsp;&nbsp;</span><span class="syntax--keyword syntax--control syntax--cpp"><span>delete</span></span><span>&nbsp;px</span><span class="syntax--punctuation syntax--terminator syntax--statement syntax--c"><span>;</span></span></span></span></div><div class="line"><span class="syntax--source syntax--cpp"><span class="syntax--meta syntax--block syntax--c"><span>&nbsp;&nbsp;</span><span class="syntax--keyword syntax--control syntax--c"><span>return</span></span><span>&nbsp;xx</span><span class="syntax--punctuation syntax--terminator syntax--statement syntax--c"><span>;</span></span></span></span></div><div class="line"><span class="syntax--source syntax--cpp"><span class="syntax--meta syntax--block syntax--c"><span class="syntax--punctuation syntax--section syntax--block syntax--end syntax--bracket syntax--curly syntax--c"><span>}</span></span></span></span></div></pre>
+<p>这个函数有可能在内部被转化为：</p>
+<pre class="editor-colors lang-c++"><div class="line"><span class="syntax--source syntax--cpp"><span class="syntax--comment syntax--line syntax--double-slash syntax--cpp"><span class="syntax--punctuation syntax--definition syntax--comment syntax--cpp"><span>//</span></span><span>可能的内部转换结果</span></span></span></div><div class="line"><span class="syntax--source syntax--cpp"><span class="syntax--comment syntax--line syntax--double-slash syntax--cpp"><span class="syntax--punctuation syntax--definition syntax--comment syntax--cpp"><span>//</span></span><span>虚拟c++&nbsp;码</span></span></span></div><div class="line"><span class="syntax--source syntax--cpp"><span class="syntax--storage syntax--type syntax--c"><span>void</span></span><span>&nbsp;</span><span class="syntax--meta syntax--function syntax--c"><span class="syntax--entity syntax--name syntax--function syntax--c"><span>foorbar</span></span><span class="syntax--punctuation syntax--section syntax--parameters syntax--begin syntax--bracket syntax--round syntax--c"><span>(</span></span><span>X&nbsp;</span><span class="syntax--keyword syntax--operator syntax--c"><span>&amp;</span></span><span>result</span><span class="syntax--punctuation syntax--section syntax--parameters syntax--end syntax--bracket syntax--round syntax--c"><span>)</span></span></span></span></div><div class="line"><span class="syntax--source syntax--cpp"><span class="syntax--meta syntax--block syntax--c"><span class="syntax--punctuation syntax--section syntax--block syntax--begin syntax--bracket syntax--curly syntax--c"><span>{</span></span></span></span></div><div class="line"><span class="syntax--source syntax--cpp"><span class="syntax--meta syntax--block syntax--c"><span class="syntax--punctuation syntax--whitespace syntax--comment syntax--leading syntax--cpp"><span>&nbsp;&nbsp;</span></span><span class="syntax--comment syntax--line syntax--double-slash syntax--cpp"><span class="syntax--punctuation syntax--definition syntax--comment syntax--cpp"><span>//</span></span><span>构造result</span></span></span></span></div><div class="line"><span class="syntax--source syntax--cpp"><span class="syntax--meta syntax--block syntax--c"><span class="syntax--punctuation syntax--whitespace syntax--comment syntax--leading syntax--cpp"><span>&nbsp;&nbsp;</span></span><span class="syntax--comment syntax--line syntax--double-slash syntax--cpp"><span class="syntax--punctuation syntax--definition syntax--comment syntax--cpp"><span>//</span></span><span>result用来取代local&nbsp;xx&nbsp;...</span></span></span></span></div><div class="line"><span class="syntax--source syntax--cpp"><span class="syntax--meta syntax--block syntax--c"><span>&nbsp;&nbsp;result</span><span class="syntax--punctuation syntax--separator syntax--dot-access syntax--c"><span>.</span></span><span class="syntax--variable syntax--other syntax--member syntax--c"><span>X</span></span><span class="syntax--meta syntax--function-call syntax--c"><span class="syntax--entity syntax--name syntax--function syntax--c"><span>::X</span></span><span class="syntax--punctuation syntax--section syntax--arguments syntax--begin syntax--bracket syntax--round syntax--c"><span>(</span></span><span class="syntax--punctuation syntax--section syntax--arguments syntax--end syntax--bracket syntax--round syntax--c"><span>)</span></span></span><span class="syntax--punctuation syntax--terminator syntax--statement syntax--c"><span>;</span></span></span></span></div><div class="line"><span class="syntax--source syntax--cpp"><span class="syntax--meta syntax--block syntax--c"><span>&nbsp;</span></span></span></div><div class="line"><span class="syntax--source syntax--cpp"><span class="syntax--meta syntax--block syntax--c"><span class="syntax--punctuation syntax--whitespace syntax--comment syntax--leading syntax--cpp"><span>&nbsp;&nbsp;</span></span><span class="syntax--comment syntax--line syntax--double-slash syntax--cpp"><span class="syntax--punctuation syntax--definition syntax--comment syntax--cpp"><span>//</span></span><span>扩展X&nbsp;\*px&nbsp;=&nbsp;new&nbsp;X;</span></span></span></span></div><div class="line"><span class="syntax--source syntax--cpp"><span class="syntax--meta syntax--block syntax--c"><span>&nbsp;&nbsp;px&nbsp;</span><span class="syntax--keyword syntax--operator syntax--assignment syntax--c"><span>=</span></span><span>&nbsp;\</span><span class="syntax--meta syntax--function-call syntax--c"><span class="syntax--entity syntax--name syntax--function syntax--c"><span>_new</span></span><span class="syntax--punctuation syntax--section syntax--arguments syntax--begin syntax--bracket syntax--round syntax--c"><span>(</span></span><span class="syntax--keyword syntax--operator syntax--sizeof syntax--c"><span>sizeof</span></span><span class="syntax--punctuation syntax--section syntax--parens syntax--begin syntax--bracket syntax--round syntax--c"><span>(</span></span><span>X</span><span class="syntax--punctuation syntax--section syntax--parens syntax--end syntax--bracket syntax--round syntax--c"><span>)</span></span><span class="syntax--punctuation syntax--section syntax--arguments syntax--end syntax--bracket syntax--round syntax--c"><span>)</span></span></span><span class="syntax--punctuation syntax--terminator syntax--statement syntax--c"><span>;</span></span></span></span></div><div class="line"><span class="syntax--source syntax--cpp"><span class="syntax--meta syntax--block syntax--c"><span>&nbsp;&nbsp;</span><span class="syntax--keyword syntax--control syntax--c"><span>if</span></span><span class="syntax--punctuation syntax--section syntax--parens syntax--begin syntax--bracket syntax--round syntax--c"><span>(</span></span><span>px&nbsp;</span><span class="syntax--keyword syntax--operator syntax--comparison syntax--c"><span>!=</span></span><span>&nbsp;</span><span class="syntax--constant syntax--numeric syntax--c"><span>0</span></span><span class="syntax--punctuation syntax--section syntax--parens syntax--end syntax--bracket syntax--round syntax--c"><span>)</span></span></span></span></div><div class="line"><span class="syntax--source syntax--cpp"><span class="syntax--meta syntax--block syntax--c"><span>&nbsp;&nbsp;&nbsp;&nbsp;px</span><span class="syntax--punctuation syntax--separator syntax--pointer-access syntax--c"><span>-&gt;</span></span><span class="syntax--variable syntax--other syntax--member syntax--c"><span>X</span></span><span class="syntax--meta syntax--function-call syntax--c"><span class="syntax--entity syntax--name syntax--function syntax--c"><span>::X</span></span><span class="syntax--punctuation syntax--section syntax--arguments syntax--begin syntax--bracket syntax--round syntax--c"><span>(</span></span><span class="syntax--punctuation syntax--section syntax--arguments syntax--end syntax--bracket syntax--round syntax--c"><span>)</span></span></span><span class="syntax--punctuation syntax--terminator syntax--statement syntax--c"><span>;</span></span></span></span></div><div class="line"><span class="syntax--source syntax--cpp"><span class="syntax--meta syntax--block syntax--c"><span>&nbsp;</span></span></span></div><div class="line"><span class="syntax--source syntax--cpp"><span class="syntax--meta syntax--block syntax--c"><span class="syntax--punctuation syntax--whitespace syntax--comment syntax--leading syntax--cpp"><span>&nbsp;&nbsp;</span></span><span class="syntax--comment syntax--line syntax--double-slash syntax--cpp"><span class="syntax--punctuation syntax--definition syntax--comment syntax--cpp"><span>//</span></span><span>扩展xx.foo()但不使用virtual机制</span></span></span></span></div><div class="line"><span class="syntax--source syntax--cpp"><span class="syntax--meta syntax--block syntax--c"><span class="syntax--punctuation syntax--whitespace syntax--comment syntax--leading syntax--cpp"><span>&nbsp;&nbsp;</span></span><span class="syntax--comment syntax--line syntax--double-slash syntax--cpp"><span class="syntax--punctuation syntax--definition syntax--comment syntax--cpp"><span>//</span></span><span>以result取代xx</span></span></span></span></div><div class="line"><span class="syntax--source syntax--cpp"><span class="syntax--meta syntax--block syntax--c"><span>&nbsp;&nbsp;</span><span class="syntax--meta syntax--function-call syntax--c"><span class="syntax--entity syntax--name syntax--function syntax--c"><span>foo</span></span><span class="syntax--punctuation syntax--section syntax--arguments syntax--begin syntax--bracket syntax--round syntax--c"><span>(</span></span><span class="syntax--keyword syntax--operator syntax--c"><span>&amp;</span></span><span>result</span><span class="syntax--punctuation syntax--section syntax--arguments syntax--end syntax--bracket syntax--round syntax--c"><span>)</span></span></span><span class="syntax--punctuation syntax--terminator syntax--statement syntax--c"><span>;</span></span></span></span></div><div class="line"><span class="syntax--source syntax--cpp"><span class="syntax--meta syntax--block syntax--c"><span>&nbsp;</span></span></span></div><div class="line"><span class="syntax--source syntax--cpp"><span class="syntax--meta syntax--block syntax--c"><span class="syntax--punctuation syntax--whitespace syntax--comment syntax--leading syntax--cpp"><span>&nbsp;&nbsp;</span></span><span class="syntax--comment syntax--line syntax--double-slash syntax--cpp"><span class="syntax--punctuation syntax--definition syntax--comment syntax--cpp"><span>//</span></span><span>使用virtual机制扩展px-&gt;foo()</span></span></span></span></div><div class="line"><span class="syntax--source syntax--cpp"><span class="syntax--meta syntax--block syntax--c"><span>&nbsp;&nbsp;</span><span class="syntax--punctuation syntax--section syntax--parens syntax--begin syntax--bracket syntax--round syntax--c"><span>(</span></span><span>\</span><span class="syntax--keyword syntax--operator syntax--c"><span>*</span></span><span>px</span><span class="syntax--punctuation syntax--separator syntax--pointer-access syntax--c"><span>-&gt;</span></span><span class="syntax--variable syntax--other syntax--member syntax--c"><span>vtbl</span></span><span class="syntax--punctuation syntax--definition syntax--begin syntax--bracket syntax--square syntax--c"><span>[</span></span><span class="syntax--constant syntax--numeric syntax--c"><span>2</span></span><span class="syntax--punctuation syntax--definition syntax--end syntax--bracket syntax--square syntax--c"><span>]</span></span><span class="syntax--punctuation syntax--section syntax--parens syntax--end syntax--bracket syntax--round syntax--c"><span>)</span></span><span class="syntax--punctuation syntax--section syntax--parens syntax--begin syntax--bracket syntax--round syntax--c"><span>(</span></span><span>px</span><span class="syntax--punctuation syntax--section syntax--parens syntax--end syntax--bracket syntax--round syntax--c"><span>)</span></span><span class="syntax--punctuation syntax--terminator syntax--statement syntax--c"><span>;</span></span></span></span></div><div class="line"><span class="syntax--source syntax--cpp"><span class="syntax--meta syntax--block syntax--c"><span>&nbsp;</span></span></span></div><div class="line"><span class="syntax--source syntax--cpp"><span class="syntax--meta syntax--block syntax--c"><span class="syntax--punctuation syntax--whitespace syntax--comment syntax--leading syntax--cpp"><span>&nbsp;&nbsp;</span></span><span class="syntax--comment syntax--line syntax--double-slash syntax--cpp"><span class="syntax--punctuation syntax--definition syntax--comment syntax--cpp"><span>//</span></span><span>扩展delete&nbsp;px</span></span></span></span></div><div class="line"><span class="syntax--source syntax--cpp"><span class="syntax--meta syntax--block syntax--c"><span>&nbsp;&nbsp;</span><span class="syntax--keyword syntax--control syntax--c"><span>if</span></span><span class="syntax--punctuation syntax--section syntax--parens syntax--begin syntax--bracket syntax--round syntax--c"><span>(</span></span><span>px&nbsp;</span><span class="syntax--keyword syntax--operator syntax--comparison syntax--c"><span>!=</span></span><span>&nbsp;</span><span class="syntax--constant syntax--numeric syntax--c"><span>0</span></span><span class="syntax--punctuation syntax--section syntax--parens syntax--end syntax--bracket syntax--round syntax--c"><span>)</span></span><span class="syntax--punctuation syntax--section syntax--block syntax--begin syntax--bracket syntax--curly syntax--c"><span>{</span></span></span></span></div><div class="line"><span class="syntax--source syntax--cpp"><span class="syntax--meta syntax--block syntax--c"><span>&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="syntax--punctuation syntax--section syntax--parens syntax--begin syntax--bracket syntax--round syntax--c"><span>(</span></span><span>\</span><span class="syntax--keyword syntax--operator syntax--c"><span>*</span></span><span>px</span><span class="syntax--punctuation syntax--separator syntax--pointer-access syntax--c"><span>-&gt;</span></span><span class="syntax--variable syntax--other syntax--member syntax--c"><span>vtbl</span></span><span class="syntax--punctuation syntax--definition syntax--begin syntax--bracket syntax--square syntax--c"><span>[</span></span><span class="syntax--constant syntax--numeric syntax--c"><span>1</span></span><span class="syntax--punctuation syntax--definition syntax--end syntax--bracket syntax--square syntax--c"><span>]</span></span><span class="syntax--punctuation syntax--section syntax--parens syntax--end syntax--bracket syntax--round syntax--c"><span>)</span></span><span class="syntax--punctuation syntax--section syntax--parens syntax--begin syntax--bracket syntax--round syntax--c"><span>(</span></span><span>px</span><span class="syntax--punctuation syntax--section syntax--parens syntax--end syntax--bracket syntax--round syntax--c"><span>)</span></span><span class="syntax--punctuation syntax--terminator syntax--statement syntax--c"><span>;</span></span><span>&nbsp;&nbsp;</span><span class="syntax--comment syntax--line syntax--double-slash syntax--cpp"><span class="syntax--punctuation syntax--definition syntax--comment syntax--cpp"><span>//</span></span><span>destructor</span></span></span></span></div><div class="line"><span class="syntax--source syntax--cpp"><span class="syntax--meta syntax--block syntax--c"><span>&nbsp;&nbsp;&nbsp;&nbsp;\</span><span class="syntax--meta syntax--function-call syntax--c"><span class="syntax--entity syntax--name syntax--function syntax--c"><span>_delete</span></span><span class="syntax--punctuation syntax--section syntax--arguments syntax--begin syntax--bracket syntax--round syntax--c"><span>(</span></span><span>px</span><span class="syntax--punctuation syntax--section syntax--arguments syntax--end syntax--bracket syntax--round syntax--c"><span>)</span></span></span><span class="syntax--punctuation syntax--terminator syntax--statement syntax--c"><span>;</span></span></span></span></div><div class="line"><span class="syntax--source syntax--cpp"><span class="syntax--meta syntax--block syntax--c"><span>&nbsp;&nbsp;</span><span class="syntax--punctuation syntax--section syntax--block syntax--end syntax--bracket syntax--curly syntax--c"><span>}</span></span></span></span></div><div class="line"><span class="syntax--source syntax--cpp"><span class="syntax--meta syntax--block syntax--c"><span>&nbsp;</span></span></span></div><div class="line"><span class="syntax--source syntax--cpp"><span class="syntax--meta syntax--block syntax--c"><span class="syntax--punctuation syntax--whitespace syntax--comment syntax--leading syntax--cpp"><span>&nbsp;&nbsp;</span></span><span class="syntax--comment syntax--line syntax--double-slash syntax--cpp"><span class="syntax--punctuation syntax--definition syntax--comment syntax--cpp"><span>//</span></span><span>不需要使用named&nbsp;return&nbsp;statement</span></span></span></span></div><div class="line"><span class="syntax--source syntax--cpp"><span class="syntax--meta syntax--block syntax--c"><span class="syntax--punctuation syntax--whitespace syntax--comment syntax--leading syntax--cpp"><span>&nbsp;&nbsp;</span></span><span class="syntax--comment syntax--line syntax--double-slash syntax--cpp"><span class="syntax--punctuation syntax--definition syntax--comment syntax--cpp"><span>//</span></span><span>不需要摧毁local&nbsp;object&nbsp;xx</span></span></span></span></div><div class="line"><span class="syntax--source syntax--cpp"><span class="syntax--meta syntax--block syntax--c"><span>&nbsp;&nbsp;</span><span class="syntax--keyword syntax--control syntax--c"><span>return</span></span><span class="syntax--punctuation syntax--terminator syntax--statement syntax--c"><span>;</span></span></span></span></div><div class="line"><span class="syntax--source syntax--cpp"><span class="syntax--meta syntax--block syntax--c"><span class="syntax--punctuation syntax--section syntax--block syntax--end syntax--bracket syntax--curly syntax--c"><span>}</span></span></span></span></div></pre>
+<p><img src="/home/hans_chen/&#x6587;&#x6863;/markdown/C++/class_X.png" alt="class_X"></p>
+<h2 id="-1-2-a-keyword-distinciton-"><strong>1.2 关键词带来的差异(A Keyword Distinciton)</strong></h2></body>
+</html>
