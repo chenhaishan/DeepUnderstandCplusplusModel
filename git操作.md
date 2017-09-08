@@ -35,3 +35,7 @@ git checkout -- git操作.md
 然后推到远端：
 git commit -m "此次更新的说明"
 git push
+
+## 更新同步
+因为只有我一个人在维护，所以直接：
+git pull
