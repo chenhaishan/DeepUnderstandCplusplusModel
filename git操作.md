@@ -40,6 +40,18 @@ git add git操作.md
 git checkout -- git操作.md
 ```
 
+如果想删除某些文件：
+```git
+//删除当前目录下所有含有'pro'的文件
+find . -type f -name '*pro*' -exec git rm {} \;
+git status
+find . -type f -name '*pro*' -exec rm -rf {} \;
+//删除当前文件下所有以'build'开头的文件夹
+git rm -r build*
+git status
+rm -rf build*
+```
+
 然后推到远端：
 ```git
 git commit -m "此次更新的说明"
